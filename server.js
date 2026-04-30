@@ -184,3 +184,14 @@ app.listen(PORT, () => {
   console.log(`✅  Bingo Happy Trip server running on port ${PORT}`);
   console.log(`   → http://localhost:${PORT}`);
 });
+
+// server.js 맨 아래 app.listen 아래에 추가
+const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+if (SELF_URL) {
+  setInterval(async () => {
+    try {
+      await fetch(`${SELF_URL}/api/ping`);
+      console.log('Self-ping OK');
+    } catch(e) {}
+  }, 10 * 60 * 1000); // 10분마다
+}

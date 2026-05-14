@@ -244,6 +244,48 @@
     .spinner{width:38px;height:38px;border:3px solid var(--ai-l);border-top-color:var(--ai);border-radius:50%;animation:spin .8s linear infinite}
     .loading-txt{font-size:13px;color:var(--ink-l);font-weight:600}
 
+
+    /* MISSION EDIT */
+    .bcell{position:relative}
+    .bcell-edit{
+      position:absolute;top:6px;right:6px;
+      width:22px;height:22px;border-radius:6px;
+      border:none;background:rgba(255,255,255,.85);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      opacity:0;transition:opacity .15s;z-index:2;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bcell:hover .bcell-edit,.bcell-edit:focus{opacity:1}
+    /* 터치 기기: 항상 표시 */
+    @media(hover:none){.bcell-edit{opacity:.7}}
+    .bcell.ck .bcell-edit{background:rgba(255,255,255,.25)}
+    .bcell-edit svg{width:12px;height:12px;fill:var(--ink-l)}
+    .bcell.ck .bcell-edit svg{fill:rgba(255,255,255,.8)}
+
+    /* list row 편집 버튼 */
+    .li-edit{
+      width:28px;height:28px;border-radius:8px;border:1px solid var(--bds);
+      background:var(--s);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:all .15s;-webkit-tap-highlight-color:transparent;
+    }
+    .li-edit:hover{background:var(--sky-l);border-color:var(--sky)}
+    .li-edit svg{width:13px;height:13px;fill:var(--ink-l)}
+    .li.done .li-edit{border-color:var(--sky);background:var(--sky-l)}
+
+    /* 편집 모달 */
+    .edit-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:flex-end;justify-content:center}
+    .edit-modal.open{display:flex}
+    .edit-sheet{background:var(--s);border-radius:22px 22px 0 0;width:100%;max-width:430px;padding:20px 20px 32px}
+    .edit-sheet-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .edit-sheet-title{font-size:14px;font-weight:700;color:var(--ink)}
+    .edit-sheet-close{width:28px;height:28px;border-radius:50%;border:1px solid var(--bds);background:none;cursor:pointer;font-size:14px;color:var(--ink-l);display:flex;align-items:center;justify-content:center}
+    .edit-textarea{width:100%;padding:12px 14px;border:1.5px solid var(--bds);border-radius:var(--rs);font-family:var(--fb);font-size:14px;color:var(--ink);background:var(--s2);outline:none;resize:none;line-height:1.5;min-height:80px}
+    .edit-textarea:focus{border-color:var(--sky);background:var(--s)}
+    .edit-actions{display:flex;gap:10px;margin-top:12px}
+    .edit-cancel{flex:1;padding:12px;border:1.5px solid var(--bds);border-radius:50px;background:var(--s);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--ink-l);cursor:pointer;transition:all .2s}
+    .edit-cancel:hover{border-color:var(--bds);background:var(--s2)}
+    .edit-save{flex:1;padding:12px;border:none;border-radius:50px;background:var(--sky);font-family:var(--fb);font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s}
+    .edit-save:hover{background:var(--sky-d)}
     /* TOAST */
     .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;font-family:var(--fb);font-size:12px;font-weight:600;padding:10px 18px;border-radius:50px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:200}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -288,6 +330,22 @@
 </head>
 <body>
 <div class="app" id="APP">
+
+<!-- MISSION EDIT MODAL -->
+<div class="edit-modal" id="edit-modal">
+  <div class="edit-sheet">
+    <div class="edit-sheet-hd">
+      <div class="edit-sheet-title">미션 수정</div>
+      <button class="edit-sheet-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <textarea class="edit-textarea" id="edit-textarea" rows="3" placeholder="미션 내용을 입력하세요"></textarea>
+    <div class="edit-actions">
+      <button class="edit-cancel" onclick="closeEditModal()">취소</button>
+      <button class="edit-save" onclick="saveEditMission()">저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- LOGIN -->
@@ -787,15 +845,21 @@ function renderBingoDay(){
   const grid=document.getElementById('bgrid');grid.innerHTML='';
   page.missions.forEach((m,i)=>{
     const c=document.createElement('div');c.className='bcell'+(page.checked[i]?' ck':'');
-    c.innerHTML=`<div class="bcell-txt">${m}</div><div class="bcell-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${page.checked[i]?'var(--ink)':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`;
-    c.onclick=()=>{
+    // 편집 아이콘 SVG
+    const editSvg=`<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+    c.innerHTML=`
+      <button class="bcell-edit" onclick="openEditModal('bingo',${i},event)" title="미션 수정">${editSvg}</button>
+      <div class="bcell-txt">${m}</div>
+      <div class="bcell-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${page.checked[i]?'var(--ink)':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`;
+    c.onclick=(e)=>{
+      // 편집 버튼 클릭은 무시
+      if(e.target.closest('.bcell-edit')) return;
       page.checked[i]=!page.checked[i];
       c.className='bcell'+(page.checked[i]?' ck':'');
-      c.querySelector('svg').setAttribute('stroke',page.checked[i]?'var(--ink)':'var(--sky)');
+      c.querySelector('.bcell-ico svg').setAttribute('stroke',page.checked[i]?'var(--ink)':'var(--sky)');
       c.querySelector('.bcell-ico').style.cssText=page.checked[i]?'background:#fff;border-color:#fff':'';
       document.getElementById('b-prog').textContent=`${page.checked.filter(Boolean).length}/9 완료`;
-      // 체크 상태 서버 저장
-      const activeEntry = history.find(h=>h.active);
+      const activeEntry=history.find(h=>h.active);
       if(activeEntry) syncChecks(activeEntry);
     };
     grid.appendChild(c);
@@ -808,7 +872,7 @@ function reshuffleBingo(){
   dailyPages[dayIdx].checked=new Array(9).fill(false);
   renderBingoDay();
   const activeEntry=history.find(h=>h.active);
-  if(activeEntry) syncChecks(activeEntry);
+  if(activeEntry){ syncChecks(activeEntry); syncMissions(activeEntry); }
   pop('rsf-b');toast('미션을 다시 생성했어요!');
 }
 
@@ -818,20 +882,33 @@ function renderList(){
   document.getElementById('l-badge').innerHTML=curMode==='ai'?'<span class="badge badge-ai">✦ AI Generated</span>':'<span class="badge badge-db">DB Random</span>';
   document.getElementById('l-prog').textContent=`${wholeChk.filter(Boolean).length}/${wholeMs.length} 완료`;
   const area=document.getElementById('larea');area.innerHTML='';
-  wholeMs.forEach((m,i)=>{const el=document.createElement('div');el.className='li'+(wholeChk[i]?' done':'');el.innerHTML=`<button class="lck${wholeChk[i]?' on':''}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${wholeChk[i]?'white':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button><div class="litxt">${m}</div>`;el.onclick=()=>{
+  const editSvg=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
+  wholeMs.forEach((m,i)=>{
+    const el=document.createElement('div');
+    el.className='li'+(wholeChk[i]?' done':'');
+    el.innerHTML=`
+      <button class="lck${wholeChk[i]?' on':''}" data-ck="${i}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${wholeChk[i]?'white':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <div class="litxt">${m}</div>
+      <button class="li-edit" onclick="openEditModal('list',${i},event)" title="미션 수정">${editSvg}</button>`;
+    // 체크는 lck 버튼 또는 litxt 클릭 시만 (편집 버튼 제외)
+    el.onclick=(e)=>{
+      if(e.target.closest('.li-edit')) return;
       wholeChk[i]=!wholeChk[i];
-      // history의 active entry chk도 동기화
       const activeEntry=history.find(h=>h.active);
       if(activeEntry && activeEntry.type==='whole') activeEntry.chk=wholeChk;
       renderList();
       if(activeEntry) syncChecks(activeEntry);
-    };area.appendChild(el);});
+    };
+    area.appendChild(el);
+  });
 }
 function reshuffleList(){
   wholeMs=getDbMissions(curCity,12);
   wholeChk=new Array(wholeMs.length).fill(false);
   const a=history.find(h=>h.active);
-  if(a){a.missions=wholeMs;a.chk=wholeChk;syncChecks(a);}
+  if(a){a.missions=wholeMs;a.chk=wholeChk;syncChecks(a);syncMissions(a);}
   renderList();
   pop('rsf-l');toast('미션을 다시 생성했어요!');
 }
@@ -1086,6 +1163,82 @@ function syncChecks(entry){
     } catch {}
   }, 1500);
 }
+
+// ── 미션 텍스트 서버 저장 (debounce 1.5초) ──
+const _missionTimers = {};
+function syncMissions(entry){
+  if(!currentUser || !entry || !entry.serverId) return;
+  clearTimeout(_missionTimers[entry.serverId]);
+  _missionTimers[entry.serverId] = setTimeout(async () => {
+    try {
+      const missions = entry.type === 'daily'
+        ? (entry.pages||[]).map(p => p.missions || [])
+        : (entry.missions||[]);
+      await fetch(`/api/trips/${entry.serverId}/missions`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ missions })
+      });
+    } catch {}
+  }, 1500);
+}
+
+// ── 미션 편집 모달 ──
+let _editCtx = null; // { source: 'bingo'|'list', idx: number }
+
+function openEditModal(source, idx, e){
+  if(e) e.stopPropagation();
+  let currentText = '';
+  if(source === 'bingo'){
+    const page = dailyPages[dayIdx];
+    currentText = page ? (page.missions[idx]||'') : '';
+  } else {
+    currentText = wholeMs[idx]||'';
+  }
+  _editCtx = { source, idx };
+  document.getElementById('edit-textarea').value = currentText;
+  document.getElementById('edit-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('edit-textarea').focus(), 100);
+}
+
+function closeEditModal(){
+  document.getElementById('edit-modal').classList.remove('open');
+  _editCtx = null;
+}
+
+function saveEditMission(){
+  if(!_editCtx) return;
+  const newText = document.getElementById('edit-textarea').value.trim();
+  if(!newText){ toast('미션 내용을 입력해주세요'); return; }
+
+  const { source, idx } = _editCtx;
+  const activeEntry = history.find(h=>h.active);
+
+  if(source === 'bingo'){
+    const page = dailyPages[dayIdx];
+    if(page){
+      page.missions[idx] = newText;
+      // history entry 동기화
+      if(activeEntry && activeEntry.pages) activeEntry.pages[dayIdx].missions[idx] = newText;
+      renderBingoDay();
+    }
+  } else {
+    wholeMs[idx] = newText;
+    if(activeEntry) activeEntry.missions[idx] = newText;
+    renderList();
+  }
+
+  // 서버 저장
+  if(activeEntry) syncMissions(activeEntry);
+  closeEditModal();
+  toast('미션이 수정됐어요 ✏️');
+}
+
+// 모달 배경 클릭 시 닫기
+document.getElementById('edit-modal').addEventListener('click', function(e){
+  if(e.target === this) closeEditModal();
+});
+// ESC 키 닫기
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeEditModal(); });
 
 // 로그아웃
 function logout(){

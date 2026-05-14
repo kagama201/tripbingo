@@ -134,6 +134,17 @@ app.patch('/api/trips/:id/checks', (req, res) => {
   res.json({ ok: true });
 });
 
+// [PATCH] /api/trips/:id/missions — 미션 텍스트 업데이트
+// Daily:  missions = [ ["미션1",...], ["미션1",...], ... ]  (페이지별)
+// Whole:  missions = [ "미션1", "미션2", ... ]
+app.patch('/api/trips/:id/missions', (req, res) => {
+  const { missions } = req.body;
+  if (missions === undefined) return res.status(400).json({ error: 'missions required' });
+  db.prepare('UPDATE trips SET missions=? WHERE id=?')
+    .run(JSON.stringify(missions), req.params.id);
+  res.json({ ok: true });
+});
+
 // [DELETE] /api/trips/:id — 삭제
 app.delete('/api/trips/:id', (req, res) => {
   db.prepare('DELETE FROM trips WHERE id=?').run(req.params.id);

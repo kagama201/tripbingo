@@ -788,12 +788,29 @@ function renderBingoDay(){
   page.missions.forEach((m,i)=>{
     const c=document.createElement('div');c.className='bcell'+(page.checked[i]?' ck':'');
     c.innerHTML=`<div class="bcell-txt">${m}</div><div class="bcell-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${page.checked[i]?'var(--ink)':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`;
-    c.onclick=()=>{page.checked[i]=!page.checked[i];c.className='bcell'+(page.checked[i]?' ck':'');c.querySelector('svg').setAttribute('stroke',page.checked[i]?'var(--ink)':'var(--sky)');c.querySelector('.bcell-ico').style.cssText=page.checked[i]?'background:#fff;border-color:#fff':'';document.getElementById('b-prog').textContent=`${page.checked.filter(Boolean).length}/9 완료`;};
+    c.onclick=()=>{
+      page.checked[i]=!page.checked[i];
+      c.className='bcell'+(page.checked[i]?' ck':'');
+      c.querySelector('svg').setAttribute('stroke',page.checked[i]?'var(--ink)':'var(--sky)');
+      c.querySelector('.bcell-ico').style.cssText=page.checked[i]?'background:#fff;border-color:#fff':'';
+      document.getElementById('b-prog').textContent=`${page.checked.filter(Boolean).length}/9 완료`;
+      // 체크 상태 서버 저장
+      const activeEntry = history.find(h=>h.active);
+      if(activeEntry) syncChecks(activeEntry);
+    };
     grid.appendChild(c);
   });
 }
 function changeDay(d){const n=dayIdx+d;if(n<0||n>=dailyPages.length)return;dayIdx=n;renderBingoDay();}
-function reshuffleBingo(){if(!dailyPages.length)return;dailyPages[dayIdx].missions=getDbMissions(curCity,9);dailyPages[dayIdx].checked=new Array(9).fill(false);renderBingoDay();pop('rsf-b');toast('미션을 다시 생성했어요!');}
+function reshuffleBingo(){
+  if(!dailyPages.length)return;
+  dailyPages[dayIdx].missions=getDbMissions(curCity,9);
+  dailyPages[dayIdx].checked=new Array(9).fill(false);
+  renderBingoDay();
+  const activeEntry=history.find(h=>h.active);
+  if(activeEntry) syncChecks(activeEntry);
+  pop('rsf-b');toast('미션을 다시 생성했어요!');
+}
 
 // ─── 리스트 ───
 function renderList(){
@@ -801,9 +818,23 @@ function renderList(){
   document.getElementById('l-badge').innerHTML=curMode==='ai'?'<span class="badge badge-ai">✦ AI Generated</span>':'<span class="badge badge-db">DB Random</span>';
   document.getElementById('l-prog').textContent=`${wholeChk.filter(Boolean).length}/${wholeMs.length} 완료`;
   const area=document.getElementById('larea');area.innerHTML='';
-  wholeMs.forEach((m,i)=>{const el=document.createElement('div');el.className='li'+(wholeChk[i]?' done':'');el.innerHTML=`<button class="lck${wholeChk[i]?' on':''}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${wholeChk[i]?'white':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button><div class="litxt">${m}</div>`;el.onclick=()=>{wholeChk[i]=!wholeChk[i];renderList();};area.appendChild(el);});
+  wholeMs.forEach((m,i)=>{const el=document.createElement('div');el.className='li'+(wholeChk[i]?' done':'');el.innerHTML=`<button class="lck${wholeChk[i]?' on':''}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${wholeChk[i]?'white':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></button><div class="litxt">${m}</div>`;el.onclick=()=>{
+      wholeChk[i]=!wholeChk[i];
+      // history의 active entry chk도 동기화
+      const activeEntry=history.find(h=>h.active);
+      if(activeEntry && activeEntry.type==='whole') activeEntry.chk=wholeChk;
+      renderList();
+      if(activeEntry) syncChecks(activeEntry);
+    };area.appendChild(el);});
 }
-function reshuffleList(){wholeMs=getDbMissions(curCity,12);wholeChk=new Array(wholeMs.length).fill(false);const a=history.find(h=>h.active);if(a){a.missions=wholeMs;a.chk=wholeChk;}renderList();pop('rsf-l');toast('미션을 다시 생성했어요!');}
+function reshuffleList(){
+  wholeMs=getDbMissions(curCity,12);
+  wholeChk=new Array(wholeMs.length).fill(false);
+  const a=history.find(h=>h.active);
+  if(a){a.missions=wholeMs;a.chk=wholeChk;syncChecks(a);}
+  renderList();
+  pop('rsf-l');toast('미션을 다시 생성했어요!');
+}
 
 // ─── 달력 ───
 function openCal(mode){calMode=mode;const t=new Date();calY=t.getFullYear();calM=t.getMonth();document.getElementById('cal-hd-title').textContent=mode==='dep'?'Departure':'Return';renderCalDays();document.getElementById('cal-modal').classList.add('open');}
@@ -974,7 +1005,6 @@ async function loadUserTrips(){
     const resp = await fetch(`/api/trips/${currentUser.userid}`);
     const data = await resp.json();
     if(data.trips && data.trips.length){
-      // 서버 기록을 history에 병합 (중복 제거)
       data.trips.forEach(t => {
         const exists = history.find(h => h.serverId === t.id);
         if(!exists){
@@ -988,13 +1018,23 @@ async function loadUserTrips(){
             active: false,
           };
           if(t.type === 'daily'){
+            // t.checks: [[false,true,...], ...] 페이지별 배열
+            const savedChecks = Array.isArray(t.checks) ? t.checks : [];
             entry.pages = (t.missions || []).map((ms, i) => ({
-              date: `Day ${i+1}`, city: t.city,
-              missions: ms, checked: new Array((ms||[]).length).fill(false)
+              date: `Day ${i+1}`,
+              city: t.city,
+              missions: ms,
+              // 저장된 체크 상태 복원, 없으면 false 배열
+              checked: Array.isArray(savedChecks[i])
+                ? savedChecks[i]
+                : new Array((ms||[]).length).fill(false)
             }));
           } else {
             entry.missions = t.missions || [];
-            entry.chk = new Array((t.missions||[]).length).fill(false);
+            // t.checks: [false, true, ...] 단일 배열
+            entry.chk = Array.isArray(t.checks) && t.checks.length === entry.missions.length
+              ? t.checks
+              : new Array(entry.missions.length).fill(false);
           }
           history.push(entry);
         }
@@ -1009,6 +1049,9 @@ async function saveTrip(entry){
     const missions = entry.type === 'daily'
       ? (entry.pages||[]).map(p => p.missions)
       : (entry.missions||[]);
+    const checks = entry.type === 'daily'
+      ? (entry.pages||[]).map(p => p.checked || [])
+      : (entry.chk||[]);
     const resp = await fetch('/api/trips', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -1017,12 +1060,31 @@ async function saveTrip(entry){
         days: entry.type==='daily'?(entry.pages||[]).length:1,
         type: entry.type,
         mode: entry.mode,
-        missions
+        missions,
+        checks
       })
     });
     const data = await resp.json();
     if(data.id) entry.serverId = data.id;
   } catch{}
+}
+
+// ── 체크 상태 서버 저장 (debounce 1.5초) ──
+const _checkTimers = {};
+function syncChecks(entry){
+  if(!currentUser || !entry || !entry.serverId) return;
+  clearTimeout(_checkTimers[entry.serverId]);
+  _checkTimers[entry.serverId] = setTimeout(async () => {
+    try {
+      const checks = entry.type === 'daily'
+        ? (entry.pages||[]).map(p => p.checked || [])
+        : (entry.chk||[]);
+      await fetch(`/api/trips/${entry.serverId}/checks`, {
+        method:'PATCH', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ checks })
+      });
+    } catch {}
+  }, 1500);
 }
 
 // 로그아웃

@@ -13,17 +13,17 @@ const PORT   = process.env.PORT || 3000;
 const SECRET = process.env.ENCRYPTION_SECRET || 'bingo_default_secret_change_me!!';
 
 // ─── DB 초기화 ───────────────────────────────────────────
-const DB_DIR  = path.join(__dirname, 'data');
+const DB_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR);
 const db = new Database(path.join(DB_DIR, 'bingo.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    userid    TEXT    UNIQUE NOT NULL,
-    name      TEXT    NOT NULL,
-    birth     TEXT    NOT NULL,
-    created_at TEXT   DEFAULT (datetime('now','localtime'))
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    userid     TEXT    UNIQUE NOT NULL,
+    name       TEXT    NOT NULL,
+    birth      TEXT    NOT NULL,
+    created_at TEXT    DEFAULT (datetime('now','localtime'))
   );
 
   CREATE TABLE IF NOT EXISTS trips (
@@ -34,10 +34,17 @@ db.exec(`
     type       TEXT,
     mode       TEXT,
     missions   TEXT,
-    created_at TEXT   DEFAULT (datetime('now','localtime')),
+    checks     TEXT    DEFAULT '[]',
+    created_at TEXT    DEFAULT (datetime('now','localtime')),
     FOREIGN KEY (userid) REFERENCES users(userid)
   );
 `);
+
+// 기존 DB에 checks 컬럼 없으면 추가 (마이그레이션)
+try {
+  db.exec(`ALTER TABLE trips ADD COLUMN checks TEXT DEFAULT '[]'`);
+  console.log('trips.checks column added (migration)');
+} catch {}
 
 // ─── 미들웨어 ─────────────────────────────────────────────
 app.use(cors());
@@ -52,35 +59,33 @@ function decrypt(cipher) {
   const bytes = CryptoJS.AES.decrypt(cipher, SECRET);
   return bytes.toString(CryptoJS.enc.Utf8);
 }
-
-// userid 생성: name + birth 조합 해시
 function makeUserId(name, birth) {
-  return CryptoJS.MD5(name.trim().toLowerCase() + birth.replace(/-/g,'')).toString().slice(0, 16);
+  return CryptoJS.MD5(name.trim().toLowerCase() + birth.replace(/-/g, '')).toString().slice(0, 16);
 }
 
 // ─── 유저 API ─────────────────────────────────────────────
 
-// [POST] /api/auth/register  — 신규 가입
+// [POST] /api/auth/register
 app.post('/api/auth/register', (req, res) => {
   const { name, birth } = req.body;
   if (!name || !birth) return res.status(400).json({ error: '이름과 생년월일을 입력해주세요.' });
 
   const userid = makeUserId(name, birth);
-  const existing = db.prepare('SELECT * FROM users WHERE userid = ?').get(userid);
-  if (existing) return res.status(409).json({ error: '이미 등록된 사용자입니다. 로그인해주세요.' });
+  if (db.prepare('SELECT userid FROM users WHERE userid=?').get(userid))
+    return res.status(409).json({ error: '이미 등록된 사용자입니다. 로그인해주세요.' });
 
-  db.prepare('INSERT INTO users (userid, name, birth) VALUES (?, ?, ?)').run(userid, name.trim(), birth);
-  const user = db.prepare('SELECT * FROM users WHERE userid = ?').get(userid);
+  db.prepare('INSERT INTO users (userid,name,birth) VALUES (?,?,?)').run(userid, name.trim(), birth);
+  const user = db.prepare('SELECT * FROM users WHERE userid=?').get(userid);
   res.json({ user: { userid: user.userid, name: user.name, birth: user.birth, created_at: user.created_at } });
 });
 
-// [POST] /api/auth/login  — 로그인
+// [POST] /api/auth/login
 app.post('/api/auth/login', (req, res) => {
   const { name, birth } = req.body;
   if (!name || !birth) return res.status(400).json({ error: '이름과 생년월일을 입력해주세요.' });
 
   const userid = makeUserId(name, birth);
-  const user = db.prepare('SELECT * FROM users WHERE userid = ?').get(userid);
+  const user = db.prepare('SELECT * FROM users WHERE userid=?').get(userid);
   if (!user) return res.status(404).json({ error: '등록된 사용자가 없습니다. 새로 가입해주세요.' });
 
   res.json({ user: { userid: user.userid, name: user.name, birth: user.birth, created_at: user.created_at } });
@@ -88,30 +93,50 @@ app.post('/api/auth/login', (req, res) => {
 
 // ─── 여행 기록 API ────────────────────────────────────────
 
-// [POST] /api/trips  — 여행 기록 저장
+// [POST] /api/trips — 저장
 app.post('/api/trips', (req, res) => {
-  const { userid, city, days, type, mode, missions } = req.body;
+  const { userid, city, days, type, mode, missions, checks } = req.body;
   if (!userid) return res.status(400).json({ error: 'userid required' });
 
   const result = db.prepare(
-    'INSERT INTO trips (userid, city, days, type, mode, missions) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(userid, city, days, type, mode, JSON.stringify(missions));
+    'INSERT INTO trips (userid,city,days,type,mode,missions,checks) VALUES (?,?,?,?,?,?,?)'
+  ).run(userid, city, days, type, mode, JSON.stringify(missions), JSON.stringify(checks || []));
 
   res.json({ id: result.lastInsertRowid });
 });
 
-// [GET] /api/trips/:userid  — 사용자 여행 기록 조회
+// [GET] /api/trips/:userid — 목록 조회 (missions + checks 함께 반환)
 app.get('/api/trips/:userid', (req, res) => {
   const trips = db.prepare(
-    'SELECT * FROM trips WHERE userid = ? ORDER BY created_at DESC LIMIT 50'
+    'SELECT * FROM trips WHERE userid=? ORDER BY created_at DESC LIMIT 50'
   ).all(req.params.userid);
 
-  res.json({ trips: trips.map(t => ({ ...t, missions: JSON.parse(t.missions || '[]') })) });
+  res.json({
+    trips: trips.map(t => ({
+      ...t,
+      missions: JSON.parse(t.missions || '[]'),
+      checks:   JSON.parse(t.checks   || '[]'),
+    }))
+  });
 });
 
-// [DELETE] /api/trips/:id  — 여행 기록 삭제
+// [PATCH] /api/trips/:id/checks — 체크 상태만 업데이트 (핵심)
+// body: { checks: [...] }
+// Daily:  checks = [ [false,true,...], [true,...], ... ]  (페이지별 배열의 배열)
+// Whole:  checks = [ false, true, ... ]                   (단일 배열)
+app.patch('/api/trips/:id/checks', (req, res) => {
+  const { checks } = req.body;
+  if (checks === undefined) return res.status(400).json({ error: 'checks required' });
+
+  db.prepare('UPDATE trips SET checks=? WHERE id=?')
+    .run(JSON.stringify(checks), req.params.id);
+
+  res.json({ ok: true });
+});
+
+// [DELETE] /api/trips/:id — 삭제
 app.delete('/api/trips/:id', (req, res) => {
-  db.prepare('DELETE FROM trips WHERE id = ?').run(req.params.id);
+  db.prepare('DELETE FROM trips WHERE id=?').run(req.params.id);
   res.json({ ok: true });
 });
 
@@ -120,7 +145,7 @@ app.post('/api/encrypt', (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'text required' });
   try { res.json({ cipher: encrypt(text) }); }
-  catch (e) { res.status(500).json({ error: 'Encryption failed' }); }
+  catch { res.status(500).json({ error: 'Encryption failed' }); }
 });
 
 // ─── LLM 프록시 API ───────────────────────────────────────
@@ -136,7 +161,6 @@ app.post('/api/generate', async (req, res) => {
 
   try {
     let result;
-
     if (provider === 'claude') {
       const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -146,7 +170,6 @@ app.post('/api/generate', async (req, res) => {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error?.message || 'Claude error');
       result = d.content?.[0]?.text || '[]';
-
     } else if (provider === 'gpt') {
       const r = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -156,7 +179,6 @@ app.post('/api/generate', async (req, res) => {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error?.message || 'GPT error');
       result = d.choices?.[0]?.message?.content || '[]';
-
     } else if (provider === 'google') {
       const modelName = model || 'gemini-2.0-flash';
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
@@ -167,7 +189,6 @@ app.post('/api/generate', async (req, res) => {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error?.message || 'Gemini error');
       result = d.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-
     } else {
       return res.status(400).json({ error: `Unknown provider: ${provider}` });
     }
@@ -197,13 +218,10 @@ app.get('*', (req, res) => {
 // ─── 서버 시작 ────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`✅ Bingo Happy Trip running on port ${PORT}`);
-
-  // Self-ping (Render 무료 슬립 방지)
   const SELF = process.env.RENDER_EXTERNAL_URL;
   if (SELF) {
     setInterval(async () => {
-      try { await fetch(`${SELF}/api/ping`); console.log('self-ping ok'); }
-      catch {}
+      try { await fetch(`${SELF}/api/ping`); } catch {}
     }, 10 * 60 * 1000);
   }
 });

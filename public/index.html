@@ -247,14 +247,93 @@
     /* TOAST */
     .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;font-family:var(--fb);font-size:12px;font-weight:600;padding:10px 18px;border-radius:50px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:200}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* LOGIN */
+    .login-scr{background:var(--s);flex-direction:column}
+    .login-hero{background:var(--s);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 40px;flex:0 0 auto}
+    .login-body{flex:1;background:#FFE8E8;border-radius:28px 28px 0 0;padding:40px 32px 32px;display:flex;flex-direction:column;gap:0}
+    .login-field{margin-bottom:20px}
+    .login-label{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:8px;display:block}
+    .login-input{width:100%;padding:13px 14px;border:1.5px solid rgba(0,0,0,.12);border-radius:12px;font-family:var(--fb);font-size:14px;color:var(--ink);background:#fff;outline:none;transition:border-color .2s}
+    .login-input:focus{border-color:var(--sky)}
+    /* 생년월일 — 드롭다운 3개 */
+    .birth-row{display:flex;gap:8px}
+    .birth-sel-wrap{position:relative;flex:1}
+    .birth-sel-wrap select{width:100%;padding:13px 28px 13px 12px;border:1.5px solid rgba(0,0,0,.12);border-radius:12px;font-family:var(--fb);font-size:13px;color:var(--ink);background:#fff;outline:none;appearance:none;cursor:pointer}
+    .birth-sel-wrap select:focus{border-color:var(--sky)}
+    .birth-arr{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;width:12px;height:12px;fill:#AAA}
+    /* 달력 픽커 */
+    .birth-cal{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:14px;margin-top:8px;display:none}
+    .birth-cal.open{display:block}
+    .birth-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:6px}
+    .birth-cal-nav select{flex:1;padding:7px 24px 7px 10px;border:1px solid var(--bds);border-radius:8px;font-family:var(--fb);font-size:13px;color:var(--ink);background:#fff;outline:none;appearance:none;cursor:pointer}
+    .birth-cal-nav-wrap{position:relative;flex:1}
+    .birth-cal-nav-wrap svg{position:absolute;right:6px;top:50%;transform:translateY(-50%);pointer-events:none;width:11px;height:11px;fill:#AAA}
+    .birth-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+    .birth-cal-dow span{text-align:center;font-size:10px;font-weight:600;color:var(--ink-l);padding:3px 0}
+    .birth-cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+    .bday{text-align:center;font-size:12px;padding:7px 2px;border-radius:8px;cursor:pointer;border:none;background:none;font-family:var(--fb);font-weight:500;color:var(--ink);-webkit-tap-highlight-color:transparent}
+    .bday:hover:not(.empty){background:var(--sky-l);color:var(--sky-d)}
+    .bday.sel{background:var(--sky);color:#fff;border-radius:50%}
+    .bday.empty{cursor:default}
+    .birth-confirm{width:100%;margin-top:10px;padding:9px;border:2px solid var(--sky);border-radius:50px;background:#fff;font-family:var(--fb);font-size:12px;font-weight:700;color:var(--sky-d);cursor:pointer;transition:all .2s}
+    .birth-confirm:hover{background:var(--sky);color:#fff}
+    .login-btns{display:flex;gap:12px;margin-top:8px}
+    .btn-new{flex:1;padding:15px;border:2px solid var(--ink);border-radius:50px;background:#fff;font-family:var(--fb);font-size:15px;font-weight:700;color:var(--ink);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+    .btn-new:hover{background:var(--ink);color:#fff}
+    .btn-login{flex:1;padding:15px;border:none;border-radius:50px;background:var(--sky);font-family:var(--fb);font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+    .btn-login:hover{background:var(--sky-d)}
+    .login-err{font-size:12px;color:#E24B4A;font-weight:600;margin-top:8px;min-height:18px;text-align:center}
   </style>
 </head>
 <body>
 <div class="app" id="APP">
 <div class="toast" id="toast"></div>
 
+<!-- LOGIN -->
+<div class="scr on login-scr" id="scr-login">
+  <div class="login-hero">
+    <div class="main-title" style="font-size:52px;margin-bottom:6px"><span>Bingo</span></div>
+    <div style="font-size:17px;color:var(--ink-l);font-style:italic">for happy trip</div>
+  </div>
+  <div class="login-body">
+    <div class="login-field">
+      <label class="login-label">Name</label>
+      <input class="login-input" id="login-name" type="text" placeholder="이름을 입력하세요" autocomplete="off">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Birth</label>
+      <!-- 달력 픽커 트리거 -->
+      <input class="login-input" id="birth-display" type="text" placeholder="생년월일 선택" readonly style="cursor:pointer;background:#fff"
+        onclick="toggleBirthCal()">
+      <!-- 달력 픽커 -->
+      <div class="birth-cal" id="birth-cal">
+        <div class="birth-cal-nav">
+          <div class="birth-cal-nav-wrap">
+            <select id="birth-year" onchange="renderBirthDays()"></select>
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+          <div class="birth-cal-nav-wrap">
+            <select id="birth-month" onchange="renderBirthDays()"></select>
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+        <div class="birth-cal-dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="birth-cal-days" id="birth-days"></div>
+        <button class="birth-confirm" onclick="confirmBirth()">선택 완료</button>
+      </div>
+    </div>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-btns">
+      <button class="btn-new" onclick="authAction('register')">New</button>
+      <button class="btn-login" onclick="authAction('login')">Login</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- ONBOARDING -->
-<div class="scr on" id="scr-onboard">
+<div class="scr" id="scr-onboard">
   <div class="onboard">
     <div class="main-title" style="margin-bottom:6px"><span>Bingo</span></div>
     <div style="font-size:18px;color:var(--ink-l);font-style:italic;margin-bottom:40px">for happy trip</div>
@@ -364,6 +443,10 @@
       <div class="drawer-header"><div class="drawer-title">History</div><button class="drawer-close" onclick="closeDrawer('main')">✕</button></div>
       <div class="drawer-body" id="dh-main"></div>
       <div class="drawer-footer">
+        <div id="drawer-user-main" style="font-size:12px;color:var(--ink-l);padding:4px 2px 8px;border-bottom:1px solid var(--bd);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+          <span id="drawer-username-main">—</span>
+          <button onclick="logout()" style="font-size:11px;color:#E24B4A;background:none;border:none;cursor:pointer;font-weight:700">로그아웃</button>
+        </div>
         <button class="new-trip-btn" onclick="closeDrawer('main')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Trip</button>
         <button class="drawer-setting-btn" onclick="goSetting('main')"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54A.484.484 0 0014 3h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 00-.59.22L2.74 9.47a.47.47 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.47.47 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</button>
       </div>
@@ -385,6 +468,10 @@
       <div class="drawer-header"><div class="drawer-title">History</div><button class="drawer-close" onclick="closeDrawer('bingo')">✕</button></div>
       <div class="drawer-body" id="dh-bingo"></div>
       <div class="drawer-footer">
+        <div id="drawer-user-bingo" style="font-size:12px;color:var(--ink-l);padding:4px 2px 8px;border-bottom:1px solid var(--bd);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+          <span id="drawer-username-bingo">—</span>
+          <button onclick="logout()" style="font-size:11px;color:#E24B4A;background:none;border:none;cursor:pointer;font-weight:700">로그아웃</button>
+        </div>
         <button class="new-trip-btn" onclick="go('scr-main');closeDrawer('bingo')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Trip</button>
         <button class="drawer-setting-btn" onclick="goSetting('bingo')"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54A.484.484 0 0014 3h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 00-.59.22L2.74 9.47a.47.47 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.47.47 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</button>
       </div>
@@ -405,6 +492,10 @@
       <div class="drawer-header"><div class="drawer-title">History</div><button class="drawer-close" onclick="closeDrawer('list')">✕</button></div>
       <div class="drawer-body" id="dh-list"></div>
       <div class="drawer-footer">
+        <div id="drawer-user-list" style="font-size:12px;color:var(--ink-l);padding:4px 2px 8px;border-bottom:1px solid var(--bd);margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
+          <span id="drawer-username-list">—</span>
+          <button onclick="logout()" style="font-size:11px;color:#E24B4A;background:none;border:none;cursor:pointer;font-weight:700">로그아웃</button>
+        </div>
         <button class="new-trip-btn" onclick="go('scr-main');closeDrawer('list')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Trip</button>
         <button class="drawer-setting-btn" onclick="goSetting('list')"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54A.484.484 0 0014 3h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 00-.59.22L2.74 9.47a.47.47 0 00.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.47.47 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>Settings</button>
       </div>
@@ -520,7 +611,13 @@ function goBack(){go(prevScreen);}
 function goSetting(from){prevScreen='scr-'+from;closeDrawer(from);go('scr-setting');}
 
 // ─── 드로어 ───
-function openDrawer(sc){renderHistory(sc);document.getElementById('drawer-'+sc).classList.add('open');}
+function openDrawer(sc){
+  renderHistory(sc);
+  // 유저 이름 표시
+  const uEl = document.getElementById('drawer-username-'+sc);
+  if(uEl && currentUser) uEl.textContent = currentUser.name + ' · ' + (currentUser.birth||'').slice(0,4);
+  document.getElementById('drawer-'+sc).classList.add('open');
+}
 function closeDrawer(sc){document.getElementById('drawer-'+sc).classList.remove('open');}
 function closeDrawerOnBg(e,sc){if(e.target===document.getElementById('drawer-'+sc))closeDrawer(sc);}
 
@@ -533,7 +630,15 @@ function renderHistory(sc){
     return `<div class="history-item${h.active?' active-trip':''}" onclick="loadHistory(${i})"><div class="hi-top"><div class="hi-city">${h.city}</div><button class="hi-del" onclick="delHistory(event,${i})">✕</button></div><div class="hi-date">${h.dep||'—'} → ${h.ret||'—'}</div><div class="hi-meta"><span class="hi-type ${h.type}">${h.type==='daily'?'Daily':'Whole'}</span><span class="hi-prog">${done} 완료</span></div></div>`;
   }).join('');
 }
-function delHistory(e,i){e.stopPropagation();history.splice(i,1);['main','bingo','list'].forEach(renderHistory);}
+function delHistory(e,i){
+  e.stopPropagation();
+  const h = history[i];
+  if(h && h.serverId){
+    fetch('/api/trips/'+h.serverId,{method:'DELETE'}).catch(()=>{});
+  }
+  history.splice(i,1);
+  ['main','bingo','list'].forEach(renderHistory);
+}
 function loadHistory(i){const h=history[i];history.forEach(x=>x.active=false);h.active=true;curCity=h.city;curType=h.type;if(h.type==='daily'){dailyPages=h.pages;dayIdx=0;['main','bingo','list'].forEach(closeDrawer);go('scr-bingo');renderBingoDay();}else{wholeMs=h.missions;wholeChk=h.chk;['main','bingo','list'].forEach(closeDrawer);go('scr-list');renderList();}}
 
 // ─── 유틸 ───
@@ -619,11 +724,11 @@ function generateDB(cities,dep,ret){
       missions:getDbMissions(c,9),
       checked:new Array(9).fill(false)
     }));
-    dayIdx=0;entry.pages=dailyPages;history.unshift(entry);go('scr-bingo');renderBingoDay();
+    dayIdx=0;entry.pages=dailyPages;history.unshift(entry);saveTrip(entry);go('scr-bingo');renderBingoDay();
   } else {
     const city=cities[0]||'싱가포르';
     wholeMs=getDbMissions(city,12);wholeChk=new Array(wholeMs.length).fill(false);
-    entry.missions=wholeMs;entry.chk=wholeChk;history.unshift(entry);go('scr-list');renderList();
+    entry.missions=wholeMs;entry.chk=wholeChk;history.unshift(entry);saveTrip(entry);go('scr-list');renderList();
   }
 }
 async function generateAI(cities,dep,ret){
@@ -659,9 +764,9 @@ async function generateAI(cities,dep,ret){
         missions:missions[i]||getDbMissions(c,9),
         checked:new Array(9).fill(false)
       }));
-      dayIdx=0;entry.pages=dailyPages;history.unshift(entry);renderBingoDay();
+      dayIdx=0;entry.pages=dailyPages;history.unshift(entry);saveTrip(entry);renderBingoDay();
     } else {
-      wholeMs=missions;wholeChk=new Array(wholeMs.length).fill(false);entry.missions=wholeMs;entry.chk=wholeChk;history.unshift(entry);renderList();
+      wholeMs=missions;wholeChk=new Array(wholeMs.length).fill(false);entry.missions=wholeMs;entry.chk=wholeChk;history.unshift(entry);saveTrip(entry);renderList();
     }
   }catch(err){
     document.getElementById('loading-'+targetScr).classList.remove('show');
@@ -778,6 +883,168 @@ function initSelects(){
 ['google','claude','gpt'].forEach(p=>{const s=localStorage.getItem('bingo_enc_'+p);if(s)encryptedKeys[p]=s;});
 initSelects();
 selectProvider('claude');
+
+// ─── 로그인/회원가입 ─────────────────────────────────────
+let currentUser = null;  // { userid, name, birth }
+let selectedBirth = null; // 'YYYY-MM-DD'
+let birthCalY = 2000, birthCalM = 0;
+
+function initBirthCal(){
+  // 년도: 1950 ~ 현재
+  const curY = new Date().getFullYear();
+  const yEl = document.getElementById('birth-year');
+  yEl.innerHTML = Array.from({length: curY - 1949}, (_,i) => {
+    const y = curY - i;
+    return `<option value="${y}"${y===2000?' selected':''}>${y}년</option>`;
+  }).join('');
+  // 월: 1~12
+  document.getElementById('birth-month').innerHTML = Array.from({length:12},(_,i)=>
+    `<option value="${i}"${i===0?' selected':''}>${i+1}월</option>`
+  ).join('');
+  birthCalY = 2000; birthCalM = 0;
+  renderBirthDays();
+}
+
+function toggleBirthCal(){
+  const cal = document.getElementById('birth-cal');
+  const isOpen = cal.classList.contains('open');
+  if(!isOpen) initBirthCal();
+  cal.classList.toggle('open', !isOpen);
+}
+
+function renderBirthDays(){
+  birthCalY = parseInt(document.getElementById('birth-year').value);
+  birthCalM = parseInt(document.getElementById('birth-month').value);
+  const fd = new Date(birthCalY, birthCalM, 1).getDay();
+  const dim = new Date(birthCalY, birthCalM + 1, 0).getDate();
+  let h = '';
+  for(let i=0;i<fd;i++) h+=`<button class="bday empty"></button>`;
+  for(let d=1;d<=dim;d++){
+    const val = `${birthCalY}-${String(birthCalM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isSel = selectedBirth === val;
+    h+=`<button class="bday${isSel?' sel':''}" onclick="selectBirthDay('${val}','${d}')">${d}</button>`;
+  }
+  document.getElementById('birth-days').innerHTML = h;
+}
+
+function selectBirthDay(val, d){
+  selectedBirth = val;
+  renderBirthDays();
+}
+
+function confirmBirth(){
+  if(!selectedBirth){ document.getElementById('birth-cal').classList.remove('open'); return; }
+  const [y,m,day] = selectedBirth.split('-');
+  document.getElementById('birth-display').value = `${y}년 ${parseInt(m)}월 ${parseInt(day)}일`;
+  document.getElementById('birth-cal').classList.remove('open');
+}
+
+async function authAction(action){
+  const name = document.getElementById('login-name').value.trim();
+  const birth = selectedBirth;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+
+  if(!name){ errEl.textContent = '이름을 입력해주세요.'; return; }
+  if(!birth){ errEl.textContent = '생년월일을 선택해주세요.'; return; }
+
+  try {
+    const resp = await fetch(`/api/auth/${action}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, birth})
+    });
+    const data = await resp.json();
+    if(!resp.ok){ errEl.textContent = data.error || '오류가 발생했습니다.'; return; }
+
+    currentUser = data.user;
+    localStorage.setItem('bingo_user', JSON.stringify(currentUser));
+    toast(`환영해요, ${currentUser.name}님! 👋`);
+
+    // 저장된 여행 기록 불러오기
+    await loadUserTrips();
+    go('scr-onboard');
+  } catch(e){
+    errEl.textContent = '서버 연결에 실패했습니다.';
+  }
+}
+
+async function loadUserTrips(){
+  if(!currentUser) return;
+  try {
+    const resp = await fetch(`/api/trips/${currentUser.userid}`);
+    const data = await resp.json();
+    if(data.trips && data.trips.length){
+      // 서버 기록을 history에 병합 (중복 제거)
+      data.trips.forEach(t => {
+        const exists = history.find(h => h.serverId === t.id);
+        if(!exists){
+          const entry = {
+            id: Date.now() + Math.random(),
+            serverId: t.id,
+            city: t.city,
+            dep: null, ret: null,
+            type: t.type,
+            mode: t.mode,
+            active: false,
+          };
+          if(t.type === 'daily'){
+            entry.pages = (t.missions || []).map((ms, i) => ({
+              date: `Day ${i+1}`, city: t.city,
+              missions: ms, checked: new Array((ms||[]).length).fill(false)
+            }));
+          } else {
+            entry.missions = t.missions || [];
+            entry.chk = new Array((t.missions||[]).length).fill(false);
+          }
+          history.push(entry);
+        }
+      });
+    }
+  } catch{}
+}
+
+async function saveTrip(entry){
+  if(!currentUser) return;
+  try {
+    const missions = entry.type === 'daily'
+      ? (entry.pages||[]).map(p => p.missions)
+      : (entry.missions||[]);
+    const resp = await fetch('/api/trips', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        userid: currentUser.userid,
+        city: entry.city,
+        days: entry.type==='daily'?(entry.pages||[]).length:1,
+        type: entry.type,
+        mode: entry.mode,
+        missions
+      })
+    });
+    const data = await resp.json();
+    if(data.id) entry.serverId = data.id;
+  } catch{}
+}
+
+// 로그아웃
+function logout(){
+  currentUser = null;
+  localStorage.removeItem('bingo_user');
+  history.length = 0;
+  go('scr-login');
+  toast('로그아웃 되었습니다');
+}
+
+// ─── 자동 로그인 (localStorage에 유저 정보 있으면) ─────────
+(async () => {
+  const saved = localStorage.getItem('bingo_user');
+  if(saved){
+    try {
+      currentUser = JSON.parse(saved);
+      await loadUserTrips();
+      go('scr-onboard');
+    } catch { localStorage.removeItem('bingo_user'); }
+  }
+})();
 </script>
 </body>
 </html>

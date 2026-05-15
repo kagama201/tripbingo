@@ -44,25 +44,7 @@
     .scr.on{display:flex}
     @media(min-width:600px){.scr{min-height:760px}}
 
-    /* ONBOARDING */
-    .onboard{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(24px,7vw,36px) clamp(18px,6vw,32px) clamp(28px,8vw,44px);text-align:center}
-    .ob-label{font-size:12px;font-weight:700;color:var(--ink-l);text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px}
-    .mode-cards{display:flex;flex-direction:column;gap:14px;width:100%}
-    .mode-pick{display:flex;align-items:center;gap:14px;padding:18px;border:2px solid var(--bd);border-radius:16px;background:var(--s);cursor:pointer;text-align:left;transition:all .22s;width:100%;font-family:var(--fb);-webkit-tap-highlight-color:transparent}
-    .mode-pick:hover{border-color:var(--bds);box-shadow:0 4px 16px rgba(0,0,0,.08)}
-    .mode-pick.pick-db.picked{border-color:var(--sky);background:var(--sky-l)}
-    .mode-pick.pick-ai.picked{border-color:var(--ai);background:var(--ai-l)}
-    .pick-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .pick-icon.db{background:var(--sky)}.pick-icon.ai{background:var(--ai)}
-    .pick-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px}
-    .pick-desc{font-size:12px;color:var(--ink-l);line-height:1.4}
-    .pick-check{width:22px;height:22px;border-radius:50%;border:2px solid #DDD;flex-shrink:0;margin-left:auto;display:flex;align-items:center;justify-content:center;transition:all .2s}
-    .mode-pick.pick-db.picked .pick-check{background:var(--sky);border-color:var(--sky)}
-    .mode-pick.pick-ai.picked .pick-check{background:var(--ai);border-color:var(--ai)}
-    .ob-next{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:28px;padding:15px;border:none;border-radius:50px;background:var(--sky);font-family:var(--fb);font-size:15px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;opacity:.45;pointer-events:none}
-    .ob-next.ready{opacity:1;pointer-events:auto}
-    .ob-next.ready:hover{background:var(--sky-d)}
-    .ob-next.ai-ready{background:var(--ai)}.ob-next.ai-ready:hover{background:var(--ai-d)}
+
 
     /* TOPBAR */
     .topbar{display:flex;align-items:center;justify-content:space-between;padding:clamp(10px,3vw,16px) clamp(14px,4.5vw,20px) clamp(8px,2.5vw,12px);border-bottom:1px solid var(--bd)}
@@ -319,17 +301,18 @@
     .bcell-edit{
       position:absolute;top:6px;right:6px;
       width:22px;height:22px;border-radius:6px;
-      border:none;background:rgba(255,255,255,.85);
+      border:1px solid rgba(0,0,0,.12);
+      background:rgba(240,240,240,.95);  /* 흰 셀에서도 구분되는 회색 */
       cursor:pointer;display:flex;align-items:center;justify-content:center;
       opacity:0;transition:opacity .15s;z-index:2;
       -webkit-tap-highlight-color:transparent;
     }
     .bcell:hover .bcell-edit,.bcell-edit:focus{opacity:1}
     /* 터치 기기: 항상 표시 */
-    @media(hover:none){.bcell-edit{opacity:.7}}
-    .bcell.ck .bcell-edit{background:rgba(255,255,255,.25)}
+    @media(hover:none){.bcell-edit{opacity:1}}
+    .bcell.ck .bcell-edit{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.4)}
     .bcell-edit svg{width:12px;height:12px;fill:var(--ink-l)}
-    .bcell.ck .bcell-edit svg{fill:rgba(255,255,255,.8)}
+    .bcell.ck .bcell-edit svg{fill:#fff}
 
     /* list row 편집 버튼 */
     .li-edit{
@@ -464,37 +447,6 @@
 </div>
 
 
-<!-- ONBOARDING -->
-<div class="scr" id="scr-onboard">
-  <div class="onboard">
-    <div class="main-title" style="margin-bottom:6px"><span>Bingo</span></div>
-    <div style="font-size:18px;color:var(--ink-l);font-style:italic;margin-bottom:40px">for happy trip</div>
-    <div class="ob-label">미션 생성 방식을 선택해주세요</div>
-    <div class="mode-cards">
-      <button class="mode-pick pick-db" id="ob-db" onclick="pickMode('db')">
-        <div class="pick-icon db"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
-        <div style="flex:1;text-align:left">
-          <div class="pick-name">DB Mode</div>
-          <div class="pick-desc">미리 준비된 미션 데이터베이스에서<br>여행지에 맞는 미션을 랜덤으로 배치</div>
-        </div>
-        <div class="pick-check" id="chk-db"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-      </button>
-      <button class="mode-pick pick-ai" id="ob-ai" onclick="pickMode('ai')">
-        <div class="pick-icon ai"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
-        <div style="flex:1;text-align:left">
-          <div class="pick-name">AI Mode <span style="display:inline-flex;padding:2px 7px;background:var(--ai-l);color:var(--ai-d);border-radius:20px;font-size:10px;font-weight:700;margin-left:4px">AI</span></div>
-          <div class="pick-desc">LLM이 여행지 정보를 바탕으로<br>맞춤형 미션을 실시간 생성</div>
-        </div>
-        <div class="pick-check" id="chk-ai"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-      </button>
-    </div>
-    <button class="ob-next" id="ob-next" onclick="confirmMode()">
-      시작하기
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-    </button>
-  </div>
-</div>
-
 <!-- MAIN -->
 <div class="scr" id="scr-main">
   <div class="main-topbar">
@@ -504,10 +456,7 @@
     </div>
     <button class="menu-btn" onclick="openDrawer('main')" style="align-self:flex-start;margin-top:8px"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
   </div>
-  <div style="padding:8px 24px 0;display:flex;align-items:center;gap:8px">
-    <div id="main-mode-chip"></div>
-    <button onclick="go('scr-onboard')" style="font-size:10px;color:var(--ink-l);background:none;border:none;cursor:pointer;text-decoration:underline">변경</button>
-  </div>
+
   <div class="form-body">
     <!-- Kids -->
     <div class="fg">
@@ -716,7 +665,7 @@ const PROVIDERS={
 };
 
 // ─── State ───
-let curMode='db', pickedMode=null, curType='daily', curCity='싱가포르';
+let curMode='db', curType='daily', curCity='싱가포르';
 let curProvider='claude';
 // encryptedKeys: 서버가 암호화한 cipher text를 localStorage에 저장
 let encryptedKeys={google:null,claude:null,gpt:null};
@@ -726,34 +675,18 @@ let dailyPages=[], dayIdx=0;
 let wholeMs=[], wholeChk=[];
 let history=[], prevScreen='scr-main';
 
-// ─── 온보딩 ───
-function pickMode(m){
-  pickedMode=m;
-  document.getElementById('ob-db').classList.toggle('picked',m==='db');
-  document.getElementById('ob-ai').classList.toggle('picked',m==='ai');
-  const btn=document.getElementById('ob-next');
-  btn.classList.add('ready');
-  m==='ai'?btn.classList.add('ai-ready'):btn.classList.remove('ai-ready');
-}
-function confirmMode(){
-  if(!pickedMode)return;
-  curMode=pickedMode;
-  applyModeUI();
-  go('scr-main');
-}
+// ─── 온보딩 제거 (DB모드 고정) ───
 function applyModeUI(){
-  document.getElementById('main-mode-chip').innerHTML=curMode==='db'
-    ?'<span class="mode-chip chip-db">DB Mode</span>'
-    :'<span class="mode-chip chip-ai">✦ AI Mode</span>';
-  // Whole 모드 도시 입력 전환 (DB: 드롭다운, AI: 텍스트)
+  // DB모드 고정
+  curMode='db';
+  // Whole 도시 입력: 항상 드롭다운
   const wDb=document.getElementById('where-db-whole');
   const wAi=document.getElementById('where-ai-whole');
-  if(wDb) wDb.style.display=curMode==='db'?'flex':'none';
-  if(wAi) wAi.style.display=curMode==='ai'?'block':'none';
-  document.getElementById('gen-btn').classList.toggle('ai-mode',curMode==='ai');
-  // day rows 재렌더 (AI/DB 전환 시 인풋 타입 변경)
+  if(wDb) wDb.style.display='flex';
+  if(wAi) wAi.style.display='none';
+  document.getElementById('gen-btn').classList.remove('ai-mode');
   renderDayRows();
-  setMode(curMode,true);
+  setMode('db',true);
 }
 
 // ─── 네비 ───
@@ -1299,7 +1232,7 @@ async function authAction(action){
 
     // 저장된 여행 기록 불러오기
     await loadUserTrips();
-    go('scr-onboard');
+    go('scr-main');
   } catch(e){
     errEl.textContent = '서버 연결에 실패했습니다.';
   }
@@ -1527,7 +1460,7 @@ function logout(){
     try {
       currentUser = JSON.parse(saved);
       await loadUserTrips();
-      go('scr-onboard');
+      go('scr-main');
     } catch { localStorage.removeItem('bingo_user'); }
   }
 })();

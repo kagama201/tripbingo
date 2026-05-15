@@ -269,6 +269,51 @@
     .loading-txt{font-size:13px;color:var(--ink-l);font-weight:600}
 
 
+
+    /* CONFIRM / CANCEL / LOCKED */
+    .confirm-bar{display:flex;gap:10px;padding:0 clamp(10px,3.5vw,16px) clamp(6px,2vw,8px)}
+    .btn-confirm{
+      flex:1;padding:clamp(11px,3vw,14px);
+      border:none;border-radius:50px;
+      background:var(--sky);font-family:var(--fb);
+      font-size:clamp(13px,3.5vw,15px);font-weight:700;color:#fff;
+      cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;
+    }
+    .btn-confirm:hover{background:var(--sky-d)}
+    .btn-cancel{
+      flex:1;padding:clamp(11px,3vw,14px);
+      border:2px solid var(--bds);border-radius:50px;
+      background:var(--s);font-family:var(--fb);
+      font-size:clamp(13px,3.5vw,15px);font-weight:700;color:var(--ink-l);
+      cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;
+    }
+    .btn-cancel:hover{border-color:var(--sky);color:var(--sky-d)}
+    /* confirmed 상태: 셀/리스트 잠금 표시 */
+    .bcell.locked{cursor:default;opacity:.85}
+    .bcell.locked .bcell-edit{display:none}
+    .li.locked{cursor:default}
+    .li.locked .li-edit{display:none}
+    .li.locked .lck{cursor:default}
+    /* confirmed 배너 */
+    .confirmed-banner{
+      display:none;align-items:center;gap:8px;
+      margin:0 clamp(10px,3.5vw,16px) clamp(4px,1.5vw,6px);
+      padding:8px 14px;background:#F0FAF4;
+      border:1px solid #1D9E75;border-radius:var(--rs);
+    }
+    .confirmed-banner.show{display:flex}
+    .confirmed-banner svg{width:14px;height:14px;fill:#1D9E75;flex-shrink:0}
+    .confirmed-banner span{font-size:12px;color:#1D9E75;font-weight:600}
+
+    /* COUPON 배지 — 히스토리 카드 우상단 */
+    .hi-coupon{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:28px;height:28px;padding:0 7px;
+      border-radius:50px;background:var(--sky);
+      font-family:var(--fb);font-size:12px;font-weight:700;color:#fff;
+      flex-shrink:0;
+    }
+    .hi-coupon.zero{background:#E0E0E0;color:#AAA}
     /* MISSION EDIT */
     .bcell{position:relative}
     .bcell-edit{
@@ -546,6 +591,16 @@
   <div class="topbar"><div class="tb-left"><div class="tb-where" id="b-city">—</div><div class="tb-when" id="b-day">Day 1</div></div><button class="menu-btn" onclick="openDrawer('bingo')"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button></div>
   <div class="bingo-meta"><div id="b-badge"></div><div class="prog" id="b-prog">0/9 완료</div></div>
   <div class="grid-wrap"><div class="bgrid" id="bgrid"></div></div>
+  <!-- confirmed 배너 -->
+  <div class="confirmed-banner" id="confirmed-banner-b">
+    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    <span>완료 확정됨 — 수정하려면 Cancel을 눌러주세요</span>
+  </div>
+  <!-- confirm / cancel 버튼 -->
+  <div class="confirm-bar">
+    <button class="btn-confirm" id="btn-confirm-b" onclick="confirmDay()">Confirm</button>
+    <button class="btn-cancel" id="btn-cancel-b" onclick="cancelDay()" style="display:none">Cancel</button>
+  </div>
   <div class="bnav"><button class="nav-btn" id="btn-prev" onclick="changeDay(-1)">← prev</button><button class="nav-btn" id="btn-next" onclick="changeDay(1)">next →</button></div>
   <button class="reshuffle" id="rsf-b" onclick="reshuffleBingo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>미션 다시 생성하기</button>
   <div class="ftr">© 2026 Gunmoo. Kim. All rights reserved.</div>
@@ -571,6 +626,15 @@
   <div class="topbar"><div class="tb-left"><div class="tb-where" id="l-city">—</div><div class="tb-when">전체 여행 미션</div></div><button class="menu-btn" onclick="openDrawer('list')"><svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button></div>
   <div class="bingo-meta"><div id="l-badge"></div><div class="prog" id="l-prog">0/0 완료</div></div>
   <div class="larea" id="larea"></div>
+  <!-- confirmed 배너 -->
+  <div class="confirmed-banner" id="confirmed-banner-l">
+    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+    <span>완료 확정됨 — 수정하려면 Cancel을 눌러주세요</span>
+  </div>
+  <div class="confirm-bar">
+    <button class="btn-confirm" id="btn-confirm-l" onclick="confirmList()">Confirm</button>
+    <button class="btn-cancel" id="btn-cancel-l" onclick="cancelList()" style="display:none">Cancel</button>
+  </div>
   <button class="reshuffle" id="rsf-l" onclick="reshuffleList()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>미션 다시 생성하기</button>
   <div class="ftr">© 2026 Gunmoo. Kim. All rights reserved.</div>
   <div class="loading-overlay" id="loading-list"><div class="spinner"></div><div class="loading-txt">AI가 미션을 생성 중이에요...</div></div>
@@ -714,7 +778,25 @@ function renderHistory(sc){
   if(!history.length){el.innerHTML='<div class="history-empty">생성한 미션이 없습니다</div>';return;}
   el.innerHTML=history.map((h,i)=>{
     const done=h.type==='whole'?h.chk.filter(Boolean).length+'/'+h.missions.length:h.pages.reduce((s,p)=>s+p.checked.filter(Boolean).length,0)+'/'+(h.pages.length*9);
-    return `<div class="history-item${h.active?' active-trip':''}" onclick="loadHistory(${i})"><div class="hi-top"><div class="hi-city">${h.city}</div><button class="hi-del" onclick="delHistory(event,${i})">✕</button></div><div class="hi-date">${h.dep||'—'} → ${h.ret||'—'}</div><div class="hi-meta"><span class="hi-type ${h.type}">${h.type==='daily'?'Daily':'Whole'}</span><span class="hi-prog">${done} 완료</span></div></div>`;
+    const coupon = h.coupons || 0;
+    const couponBadge = coupon > 0
+      ? `<div class="hi-coupon">+${coupon}</div>`
+      : `<div class="hi-coupon zero">0</div>`;
+    // 날짜: dep/ret가 없거나 '—'이면 표시 안 함
+    const depStr = h.dep && h.dep !== '—' ? h.dep : '';
+    const retStr = h.ret && h.ret !== '—' ? h.ret : '';
+    const dateStr = depStr || retStr ? `${depStr}${depStr && retStr ? ' → ' : ''}${retStr}` : '';
+    return `<div class="history-item${h.active?' active-trip':''}" onclick="loadHistory(${i})">
+      <div class="hi-top">
+        <div class="hi-city">${h.city}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          ${couponBadge}
+          <button class="hi-del" onclick="delHistory(event,${i})">✕</button>
+        </div>
+      </div>
+      ${dateStr ? `<div class="hi-date">${dateStr}</div>` : ''}
+      <div class="hi-meta"><span class="hi-type ${h.type}">${h.type==='daily'?'Daily':'Whole'}</span><span class="hi-prog">${done} 완료</span></div>
+    </div>`;
   }).join('');
 }
 function delHistory(e,i){
@@ -866,25 +948,34 @@ async function generateAI(cities,dep,ret){
 function renderBingoDay(){
   const page=dailyPages[dayIdx],total=dailyPages.length;
   const pageCity=page.city||curCity;
+  const locked=!!page.confirmed; // confirmed 상태
   document.getElementById('b-city').textContent=pageCity;
   document.getElementById('b-day').textContent=`Day ${dayIdx+1}/${total}`;
   document.getElementById('btn-prev').disabled=(dayIdx===0);document.getElementById('btn-next').disabled=(dayIdx===total-1);
   document.getElementById('b-prog').textContent=`${page.checked.filter(Boolean).length}/9 완료`;
   document.getElementById('b-badge').innerHTML=curMode==='ai'?'<span class="badge badge-ai">✦ AI Generated</span>':'<span class="badge badge-db">DB Random</span>';
+
+  // confirm/cancel 버튼 상태
+  document.getElementById('btn-confirm-b').style.display = locked ? 'none' : '';
+  document.getElementById('btn-cancel-b').style.display  = locked ? ''     : 'none';
+  document.getElementById('confirmed-banner-b').classList.toggle('show', locked);
+  document.getElementById('rsf-b').style.display = locked ? 'none' : '';
+
   const grid=document.getElementById('bgrid');grid.innerHTML='';
   page.missions.forEach((m,i)=>{
-    const c=document.createElement('div');c.className='bcell'+(page.checked[i]?' ck':'');
-    // 편집 아이콘 SVG
+    const ckClass = page.checked[i] ? ' ck' : '';
+    const lockClass = locked ? ' locked' : '';
+    const c=document.createElement('div');c.className='bcell'+ckClass+lockClass;
     const editSvg=`<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
     c.innerHTML=`
       <button class="bcell-edit" onclick="openEditModal('bingo',${i},event)" title="미션 수정">${editSvg}</button>
       <div class="bcell-txt">${m}</div>
       <div class="bcell-ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${page.checked[i]?'var(--ink)':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`;
     c.onclick=(e)=>{
-      // 편집 버튼 클릭은 무시
+      if(locked) return; // locked 상태면 인터랙션 차단
       if(e.target.closest('.bcell-edit')) return;
       page.checked[i]=!page.checked[i];
-      c.className='bcell'+(page.checked[i]?' ck':'');
+      c.className='bcell'+(page.checked[i]?' ck':'')+lockClass;
       c.querySelector('.bcell-ico svg').setAttribute('stroke',page.checked[i]?'var(--ink)':'var(--sky)');
       c.querySelector('.bcell-ico').style.cssText=page.checked[i]?'background:#fff;border-color:#fff':'';
       document.getElementById('b-prog').textContent=`${page.checked.filter(Boolean).length}/9 완료`;
@@ -907,25 +998,34 @@ function reshuffleBingo(){
 
 // ─── 리스트 ───
 function renderList(){
+  const activeEntry=history.find(h=>h.active);
+  const locked=!!(activeEntry&&activeEntry.confirmed);
   document.getElementById('l-city').textContent=curCity;
   document.getElementById('l-badge').innerHTML=curMode==='ai'?'<span class="badge badge-ai">✦ AI Generated</span>':'<span class="badge badge-db">DB Random</span>';
   document.getElementById('l-prog').textContent=`${wholeChk.filter(Boolean).length}/${wholeMs.length} 완료`;
+
+  // confirm/cancel 버튼 상태
+  document.getElementById('btn-confirm-l').style.display = locked ? 'none' : '';
+  document.getElementById('btn-cancel-l').style.display  = locked ? ''     : 'none';
+  document.getElementById('confirmed-banner-l').classList.toggle('show', locked);
+  document.getElementById('rsf-l').style.display = locked ? 'none' : '';
+
   const area=document.getElementById('larea');area.innerHTML='';
   const editSvg=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
   wholeMs.forEach((m,i)=>{
+    const lockClass = locked ? ' locked' : '';
     const el=document.createElement('div');
-    el.className='li'+(wholeChk[i]?' done':'');
+    el.className='li'+(wholeChk[i]?' done':'')+lockClass;
     el.innerHTML=`
       <button class="lck${wholeChk[i]?' on':''}" data-ck="${i}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${wholeChk[i]?'white':'var(--sky)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
       <div class="litxt">${m}</div>
       <button class="li-edit" onclick="openEditModal('list',${i},event)" title="미션 수정">${editSvg}</button>`;
-    // 체크는 lck 버튼 또는 litxt 클릭 시만 (편집 버튼 제외)
     el.onclick=(e)=>{
+      if(locked) return;
       if(e.target.closest('.li-edit')) return;
       wholeChk[i]=!wholeChk[i];
-      const activeEntry=history.find(h=>h.active);
       if(activeEntry && activeEntry.type==='whole') activeEntry.chk=wholeChk;
       renderList();
       if(activeEntry) syncChecks(activeEntry);
@@ -940,6 +1040,106 @@ function reshuffleList(){
   if(a){a.missions=wholeMs;a.chk=wholeChk;syncChecks(a);syncMissions(a);}
   renderList();
   pop('rsf-l');toast('미션을 다시 생성했어요!');
+}
+
+// ─── Confirm / Cancel / Coupon ───────────────────────────
+
+// 쿠폰 계산: allClear → +2, 1개이상 체크 → +1, 0개 → 0
+function calcCoupon(checked){
+  const done = Array.isArray(checked[0])
+    // Daily: 페이지별 배열의 배열
+    ? checked.reduce((s,arr)=>s+arr.filter(Boolean).length, 0)
+    : checked.filter(Boolean).length;
+  const total = Array.isArray(checked[0])
+    ? checked.reduce((s,arr)=>s+arr.length, 0)
+    : checked.length;
+  if(total===0) return 0;
+  if(done===total) return 2;
+  if(done>0) return 1;
+  return 0;
+}
+
+// Bingo Daily: 현재 Day confirm
+function confirmDay(){
+  const page = dailyPages[dayIdx];
+  if(!page) return;
+  if(page.confirmed) return;
+  page.confirmed = true;
+
+  const activeEntry = history.find(h=>h.active);
+  if(activeEntry){
+    // 현재 Day 체크 기준 쿠폰 계산
+    const dayCoupon = page.checked.filter(Boolean).length === 9 ? 2 : page.checked.filter(Boolean).length > 0 ? 1 : 0;
+    activeEntry.coupons = (activeEntry.coupons||0) + dayCoupon;
+    activeEntry.dayCoupons = activeEntry.dayCoupons || {};
+    activeEntry.dayCoupons[dayIdx] = dayCoupon;
+    syncChecks(activeEntry);
+  }
+  renderBingoDay();
+  ['main','bingo','list'].forEach(sc => {
+    const dh = document.getElementById('dh-'+sc);
+    if(dh && dh.innerHTML) renderHistory(sc);
+  });
+  toast(`Day ${dayIdx+1} 확정! 쿠폰 +${activeEntry?.dayCoupons?.[dayIdx]||0} 🎫`);
+}
+
+function cancelDay(){
+  const page = dailyPages[dayIdx];
+  if(!page || !page.confirmed) return;
+  page.confirmed = false;
+
+  const activeEntry = history.find(h=>h.active);
+  if(activeEntry){
+    const prevCoupon = (activeEntry.dayCoupons||{})[dayIdx] || 0;
+    activeEntry.coupons = Math.max(0, (activeEntry.coupons||0) - prevCoupon);
+    if(activeEntry.dayCoupons) delete activeEntry.dayCoupons[dayIdx];
+    syncChecks(activeEntry);
+  }
+  renderBingoDay();
+  ['main','bingo','list'].forEach(sc => {
+    const dh = document.getElementById('dh-'+sc);
+    if(dh && dh.innerHTML) renderHistory(sc);
+  });
+  toast(`Day ${dayIdx+1} 확정 취소됨`);
+}
+
+// Whole List confirm
+function confirmList(){
+  const activeEntry = history.find(h=>h.active);
+  if(!activeEntry || activeEntry.confirmed) return;
+  activeEntry.confirmed = true;
+
+  const done = wholeChk.filter(Boolean).length;
+  const total = wholeMs.length;
+  const coupon = done === total ? 2 : done > 0 ? 1 : 0;
+  activeEntry.coupons = (activeEntry.coupons||0) + coupon;
+  activeEntry.wholeCoupon = coupon;
+  syncChecks(activeEntry);
+
+  renderList();
+  ['main','bingo','list'].forEach(sc => {
+    const dh = document.getElementById('dh-'+sc);
+    if(dh && dh.innerHTML) renderHistory(sc);
+  });
+  toast(`미션 확정! 쿠폰 +${coupon} 🎫`);
+}
+
+function cancelList(){
+  const activeEntry = history.find(h=>h.active);
+  if(!activeEntry || !activeEntry.confirmed) return;
+  activeEntry.confirmed = false;
+
+  const prevCoupon = activeEntry.wholeCoupon || 0;
+  activeEntry.coupons = Math.max(0, (activeEntry.coupons||0) - prevCoupon);
+  delete activeEntry.wholeCoupon;
+  syncChecks(activeEntry);
+
+  renderList();
+  ['main','bingo','list'].forEach(sc => {
+    const dh = document.getElementById('dh-'+sc);
+    if(dh && dh.innerHTML) renderHistory(sc);
+  });
+  toast('확정 취소됨');
 }
 
 // ─── 달력 ───
@@ -1123,25 +1323,41 @@ async function loadUserTrips(){
             mode: t.mode,
             active: false,
           };
+          // checks 컬럼: { data:[...], meta:{...} } 또는 구버전 배열 둘 다 지원
+          const rawChecks = t.checks;
+          let checksData = [];
+          let checksMeta = {};
+          if(rawChecks && typeof rawChecks === 'object' && !Array.isArray(rawChecks) && rawChecks.data){
+            // 신규 형태: { data, meta }
+            checksData = rawChecks.data;
+            checksMeta = rawChecks.meta || {};
+          } else if(Array.isArray(rawChecks)){
+            // 구버전 호환: 단순 배열
+            checksData = rawChecks;
+          }
+
           if(t.type === 'daily'){
-            // t.checks: [[false,true,...], ...] 페이지별 배열
-            const savedChecks = Array.isArray(t.checks) ? t.checks : [];
+            const confirmedPages = Array.isArray(checksMeta.confirmedPages) ? checksMeta.confirmedPages : [];
             entry.pages = (t.missions || []).map((ms, i) => ({
               date: `Day ${i+1}`,
               city: t.city,
               missions: ms,
-              // 저장된 체크 상태 복원, 없으면 false 배열
-              checked: Array.isArray(savedChecks[i])
-                ? savedChecks[i]
-                : new Array((ms||[]).length).fill(false)
+              checked: Array.isArray(checksData[i])
+                ? checksData[i]
+                : new Array((ms||[]).length).fill(false),
+              confirmed: !!confirmedPages[i]
             }));
+            entry.dayCoupons = checksMeta.dayCoupons || {};
           } else {
             entry.missions = t.missions || [];
-            // t.checks: [false, true, ...] 단일 배열
-            entry.chk = Array.isArray(t.checks) && t.checks.length === entry.missions.length
-              ? t.checks
-              : new Array(entry.missions.length).fill(false);
+            const flat = Array.isArray(checksData) && !Array.isArray(checksData[0]) ? checksData : [];
+            entry.chk = flat.length === (t.missions||[]).length
+              ? flat
+              : new Array((t.missions||[]).length).fill(false);
+            entry.confirmed = !!checksMeta.confirmed;
+            entry.wholeCoupon = checksMeta.wholeCoupon || 0;
           }
+          entry.coupons = checksMeta.coupons || 0;
           history.push(entry);
         }
       });
@@ -1155,9 +1371,18 @@ async function saveTrip(entry){
     const missions = entry.type === 'daily'
       ? (entry.pages||[]).map(p => p.missions)
       : (entry.missions||[]);
-    const checks = entry.type === 'daily'
-      ? (entry.pages||[]).map(p => p.checked || [])
-      : (entry.chk||[]);
+
+    // 초기 저장도 { data, meta } 형태로 통일
+    let checksData, meta = {};
+    if(entry.type === 'daily'){
+      checksData = (entry.pages||[]).map(p => p.checked || []);
+      meta = { confirmedPages: (entry.pages||[]).map(p => !!p.confirmed), dayCoupons: {}, coupons: 0 };
+    } else {
+      checksData = entry.chk || [];
+      meta = { confirmed: false, wholeCoupon: 0, coupons: 0 };
+    }
+    const checks = { data: checksData, meta };
+
     const resp = await fetch('/api/trips', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -1175,16 +1400,33 @@ async function saveTrip(entry){
   } catch{}
 }
 
-// ── 체크 상태 서버 저장 (debounce 1.5초) ──
+// ── 체크 상태 + 메타(confirmed/coupons) 서버 저장 (debounce 1.5초) ──
+// checks 컬럼 하나에 { data: [...], meta: {...} } 형태로 직렬화
 const _checkTimers = {};
 function syncChecks(entry){
   if(!currentUser || !entry || !entry.serverId) return;
   clearTimeout(_checkTimers[entry.serverId]);
   _checkTimers[entry.serverId] = setTimeout(async () => {
     try {
-      const checks = entry.type === 'daily'
-        ? (entry.pages||[]).map(p => p.checked || [])
-        : (entry.chk||[]);
+      let checksData;
+      let meta = {};
+
+      if(entry.type === 'daily'){
+        checksData = (entry.pages||[]).map(p => p.checked || []);
+        // 페이지별 confirmed 상태
+        meta.confirmedPages = (entry.pages||[]).map(p => !!p.confirmed);
+        meta.dayCoupons = entry.dayCoupons || {};
+        meta.coupons = entry.coupons || 0;
+      } else {
+        checksData = entry.chk || [];
+        meta.confirmed = !!entry.confirmed;
+        meta.wholeCoupon = entry.wholeCoupon || 0;
+        meta.coupons = entry.coupons || 0;
+      }
+
+      // { data, meta } 형태로 래핑해서 저장
+      const checks = { data: checksData, meta };
+
       await fetch(`/api/trips/${entry.serverId}/checks`, {
         method:'PATCH', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ checks })
